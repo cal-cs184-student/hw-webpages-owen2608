@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS 184/284A Final Project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #fafaf8;
+            --text: #1a1a1a;
+            --muted: #5c5c5c;
+            --accent: #2c5aa0;
+            --accent-light: #e8f0fc;
+            --border: #ddd;
+            --code-bg: #f3f3f0;
+            --serif: 'Source Serif 4', Georgia, serif;
+            --sans: 'Source Sans 3', -apple-system, sans-serif;
+            --mono: 'Source Code Pro', monospace;
+            --max-width: 780px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 16px;
+            padding: 3rem 1.5rem;
+        }
+
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        /* ── Header ── */
+        header {
+            text-align: center;
+            padding-bottom: 2rem;
+            margin-bottom: 2.5rem;
+            border-bottom: 2px solid var(--text);
+        }
+
+        .course-label {
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        h1 {
+            font-family: var(--serif);
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1.25;
+            margin-bottom: 1rem;
+        }
+
+        .team {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .team a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .team a:hover { text-decoration: underline; }
+
+        /* ── Sections ── */
+        h2 {
+            font-family: var(--serif);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 2.5rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h3 {
+            font-family: var(--sans);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p { margin-bottom: 1rem; }
+
+        ul, ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        li { margin-bottom: 0.35rem; }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover { text-decoration: underline; }
+
+        /* ── Images / Figures ── */
+        .image-placeholder {
+            background: var(--code-bg);
+            border: 2px dashed var(--border);
+            border-radius: 6px;
+            padding: 3rem 1rem;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin: 1.5rem 0;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .gallery img {
+            width: 100%;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .gallery .image-placeholder {
+            margin: 0;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        figure {
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        figure img {
+            max-width: 100%;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        figcaption {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        /* ── Table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--code-bg);
+            font-weight: 600;
+        }
+
+        /* ── Code ── */
+        code {
+            font-family: var(--mono);
+            background: var(--code-bg);
+            padding: 0.15em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        /* ── Video embed ── */
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border: none;
+        }
+
+        /* ── Footer ── */
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        /* ── Math (optional MathJax) ── */
+        .math-block {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.6rem; }
+            body { padding: 1.5rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- ════════════════════════════════════════════ -->
+        <!--  HEADER — Update with your project info     -->
+        <!-- ════════════════════════════════════════════ -->
+        <header>
+            <div class="course-label">CS 184/284A · Spring 2026</div>
+            <h1>Your Project Title Here</h1>
+            <p class="team">
+                <a href="#">Team Member 1</a>,
+                <a href="#">Team Member 2</a>,
+                <a href="#">Team Member 3</a>,
+                <a href="#">Team Member 4</a>
+            </p>
+        </header>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!--  SUMMARY                                     -->
+        <!-- ════════════════════════════════════════════ -->
+        <h2>Summary</h2>
+        <p>
+            Write 2–3 sentences summarizing your project here. Describe the core idea, what you plan to
+            build, and why it is interesting.
+        </p>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!--  PROBLEM DESCRIPTION                         -->
+        <!-- ════════════════════════════════════════════ -->
+        <h2>Problem Description</h2>
+        <p>
+            Describe the problem you are trying to solve. Why is it important? What makes it challenging?
+            Give a general idea of your planned approach.
+        </p>
+
+        <div class="image-placeholder">Diagram or figure illustrating the problem (replace me)</div>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!--  GOALS AND DELIVERABLES                      -->
+        <!-- ════════════════════════════════════════════ -->
+        <h2>Goals and Deliverables</h2>
+
+        <h3>Baseline Plan (what we plan to deliver)</h3>
+        <ul>
+            <li>Goal 1 — describe what you must accomplish for a successful project.</li>
+            <li>Goal 2 — e.g., "Render X effect at interactive frame rates."</li>
+            <li>Goal 3 — include how you will measure quality/performance (graphs, metrics, comparisons).</li>
+        </ul>
+
+        <h3>Aspirational Plan (what we hope to deliver)</h3>
+        <ul>
+            <li>Stretch Goal 1 — what you'll tackle if you get ahead of schedule.</li>
+            <li>Stretch Goal 2 — e.g., "Add real-time user interaction via …"</li>
+        </ul>
+
+        <h3>Quality & Performance Metrics</h3>
+        <p>
+            Describe how you will evaluate your results. Example: speedup graphs, accuracy comparisons to
+            ground truth, side-by-side renderings, user study, etc.
+        </p>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!--  SCHEDULE                                    -->
+        <!-- ════════════════════════════════════════════ -->
+        <h2>Schedule</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Week</th>
+                    <th>Dates</th>
+                    <th>Tasks</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Apr 7 – Apr 13</td>
+                    <td>Research &amp; set up codebase; implement initial …</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Apr 14 – Apr 20</td>
+                    <td>Core algorithm implementation; prepare milestone deliverables</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Apr 21 – Apr 27</td>
+                    <td>Refinement, optimization, stretch goals</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Apr 28 – May 4</td>
+                    <td>Final results, video, report, presentation prep</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!--  RESOURCES                                   -->
+        <!-- ════════════════════════════════════════════ -->
+        <h2>Resources</h2>
+        <ul>
+            <li><a href="#">Paper/Book Reference 1</a> — brief description.</li>
+            <li><a href="#">Paper/Book Reference 2</a> — brief description.</li>
+            <li><a href="#">Starter code / library</a> — what you are building on top of.</li>
+        </ul>
+        <p>
+            <strong>Platform:</strong> Describe your computing platform (e.g., personal laptop with NVIDIA GPU,
+            university compute cluster, etc.) and key software/libraries.
+        </p>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!--  FOOTER                                      -->
+        <!-- ════════════════════════════════════════════ -->
+        <footer>
+            <p>CS 184/284A: Computer Graphics and Imaging, Spring 2026 · UC Berkeley</p>
+        </footer>
+
+    </div>
+</body>
+</html>

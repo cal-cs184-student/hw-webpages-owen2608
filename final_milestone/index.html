@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CS 184 Final Project &mdash; Terra: A Procedural World Renderer</title>
+  <style>
+    
+    :root {
+      --bg: #fdfdfd;
+      --fg: #1a1a1a;
+      --accent: #2563eb;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --card-bg: #ffffff;
+      --code-bg: #f1f5f9;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+ @media print {
+  body {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  main {
+    padding: 1rem 1.5rem 1rem;
+  }
+  section {
+    margin-bottom: 0.6rem;
+  }
+  th, td {
+    padding: 0.3rem 0.6rem;
+  }
+  ul {
+    margin: 0.2rem 0 0.5rem 1.5rem;
+  }
+  p {
+    margin-bottom: 0.5rem;
+  }
+}
+
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.7;
+      font-size: 13.5px;
+    }
+section > b:first-child {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0; /* remove all margin, not just bottom */
+  line-height: 1.3; /* tighter line height */
+}
+
+/* Also reduce the top margin of whatever comes right after */
+section > b:first-child + p,
+section > b:first-child + ul {
+  margin-top: 0.3rem; /* was 1rem on p, 0.5rem on ul */
+}
+
+    header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #f1f5f9;
+      padding: 1.5rem 1.5rem 1rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+
+    header p {
+      color: #94a3b8;
+      font-size: 1.05rem;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 1.5rem;
+      display: flex;
+      gap: 0.4rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0.35rem 0.9rem;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+      background: #eff6ff;
+    }
+
+    main {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+
+    section {
+      margin-bottom: 1.4rem;
+    }
+
+    h2 {
+      font-size: 1.55rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.45rem;
+      border-bottom: 1px solid var(--accent);
+      display: inline-block;
+    }
+
+    h3 {
+      /* font-size: 1.15rem; */
+
+      font-weight: 700;
+      /* margin-top: 1.5rem; */
+      /* margin-bottom: 0.1rem; */
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin: 0.5rem 0 1rem 1.5rem;
+      color: #334155;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    code {
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.92em;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background: var(--code-bg);
+      padding: 0.6rem 0.9rem;
+      text-align: left;
+      border: 1px solid var(--border);
+      font-weight: 600;
+    }
+
+    td {
+      padding: 0.6rem 0.9rem;
+      border: 1px solid var(--border);
+      color: #334155;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+      margin: 1.5rem 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      margin-bottom: 0.75rem;
+    }
+
+    .equation {
+      background: var(--code-bg);
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 1rem;
+      margin: 1rem 0;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      font-size: 0.92em;
+      overflow-x: auto;
+      border-radius: 0 4px 4px 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+
+    a.resource-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a.resource-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<!-- <header>
+  <h1>Terra: A Procedural World Renderer</h1>
+  <p>CS 184: Final Project &mdash; Milestone Report</p>
+  <p>Sarvagya Somvanshi &middot; Mohan Xu &middot; Afreen Shameem &middot; Owen Ye</p>
+  <p>https://som1shi.github.io/cs184/final/</p>
+</header>
+
+<nav>
+  <a href="#deliverables">Deliverables</a>
+  <a href="#summary">Progress Summary</a>
+  <a href="#Preliminary_results">Preliminary Results</a>
+  <a href="#status">Status</a>
+  <a href="#schedule">Schedule</a>
+</nav> -->
+
+<main>
+
+  <!-- ============ DELIVERABLES ============ -->
+  <section id="deliverables">
+    <b>Deliverables</b>
+
+    <ul>
+      <li><strong>Milestone Video:</strong> <a class="resource-link" href="https://www.youtube.com/watch?v=j9I2GQvo_W0&feature=youtu.be" target="_blank">YouTube</a></li>
+      <li><strong>Presentation Slides:</strong> <a class ="resource-link" href="https://docs.google.com/presentation/d/1WHMv_cMEymZL_jN8q2AU0tCmSxwUfGsNz5Sqc11t9eE/edit?usp=sharing" target="_blank">Slides</a></li>
+      <!-- <li><strong>Project webpage:</strong> <a class="resource-link" href="https://som1shi.github.io/cs184/final/" target="_blank">https://som1shi.github.io/cs184/final/</a></li> -->
+    </ul>
+  </section>
+
+  <!-- ============ SUMMARY ============ -->
+  <section id="summary">
+    <b>Progress Summary</b>
+
+    <p>
+      Terra is a fully browser-based 3D procedural world engine built on WebGPU with zero runtime
+      dependencies. Over the past two weeks we implemented three core subsystems: a procedural
+      terrain with GPU-driven hydraulic erosion and vegetation, an FFT ocean simulation with Fresnel
+      reflections, and atmospheric scattering based on Bruneton's atmospheric scattering. All three render together in
+      a unified scene.
+      <!-- <br> As next steps, we will finish atmosphere integration by wiring the precomputed LUTs into terrain and ocean lighting, and port the ocean FFT from CPU to GPU for better performance. We also plan to add volumetric clouds with bloom effects and improve texture filtering for smoother visuals. -->
+    </p>
+
+ 
+  </section>
+
+  <!-- ============ TERRAIN ============ -->
+   <section id="Preliminary_results">
+    <b>Preliminary Results</b>
+   </section>
+
+  <section id="terrain">
+
+    <h3>Terrain</h3>
+
+    <p>
+      A 512&times;512 heightmap is generated on the CPU using 7-octave fBm Perlin noise (lacunarity
+      2.0, persistence 0.40) with domain warping to break grid alignment, then shaped by a radial
+      island falloff and Gaussian blur.
+      The heightmap is then run through a GPU erosion pipeline consisting
+      of 12 compute shader entry points orchestrated across 300 outer iterations with thousands of
+      dispatches. Erosion follows the Stream Power Equation.
+   
+      The terrain fragment shader blends five biomes via triplanar
+      texturing driven by altitude and slope, with noise-perturbed thresholds for organic transitions.
+      Lighting uses a three-light rig ray-marched soft shadows. Rivers are rendered
+      by sampling flow accumulation data with Phong specular highlights.
+    </p>
+
+    <!-- <p>
+      A vegetation system places up to 50,000 crossed-quad grass instances via GPU compute with
+      atomic indirect drawing, filtered by height, slope, and drainage. Final output passes through
+      ACES filmic tone mapping, sRGB gamma, and color grading.
+    </p> -->
+  </section>
+
+  <!-- ============ OCEAN ============ -->
+  <section id="ocean">
+    <h3>Ocean</h3>
+
+    <p>
+      The ocean uses Tessendorf-style FFT wave synthesis driven by the Phillips spectrum:
+   
+      The spectrum is initialized via Box-Muller Gaussian sampling with conjugate symmetry for
+      real-valued output. 
+  
+      An in-place radix-2 Cooley-Tukey FFT on a 128&times;128 grid reconstructs the height field as
+      a separable 2D IFFT, running on the CPU with per-frame texture
+      upload. The ocean renders as a 256&times;256 mesh with Schlick Fresnel reflections.
+    </p>
+  </section>
+
+  <!-- ============ ATMOSPHERE ============ -->
+  <section id="atmosphere">
+    <h3>Atmosphere &amp; Sky</h3>
+
+    <p>
+      The sky renders as a full-screen quad behind all geometry with a time-of-day system driving
+      morning, evening, and night transitions with sunset/sunrise coloring and seed-based hue
+      variation. Procedural clouds use 3-octave value noise with time-of-day drift while a sun disk and
+      moon complete the sky dome. Precomputed transmittance, scattering, and irradiance textures have been generated via compute shader using Bruneton's atmospheric parameters. 
+    </p>
+
+    <!-- <p>
+      <strong>Integration status:</strong> Precomputed transmittance (256&times;64
+      <code>rg16float</code>), scattering (256&times;128&times;32 3D <code>rgba16float</code>), and
+      irradiance (64&times;16 <code>rgba16float</code>) textures have been generated via compute
+      shader using Bruneton's atmospheric parameters. These LUTs exist but are not yet wired into
+      the sky dome shader or applied as aerial perspective to terrain and ocean.
+    </p> -->
+  </section>
+
+  <!-- ============ STATUS ============ -->
+  <section id="status">
+    <b>Current Status</b>
+
+    <!-- <span class="status-badge">&#x2713; On Track</span> -->
+
+    <p>
+      We are on track with our original timeline. All primary rendering features targeted for
+      Milestone 1 are implemented and functional. The main area we need to touch up is atmosphere integration
+      as we need to finish connecting the precomputed sky data to the final rendering for the most accurate lighting and color. 
+      In addition, we are working to port ocean FFT to GPU instead of CPU. Outside of that, we'll do work on some of our stretch (Aspirational!) goals.
+      
+     
+    </p>
+  </section>
+
+  <!-- ============ SCHEDULE ============ -->
+  <section id="schedule">
+    <b>Updated Schedule</b>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Focus</th>
+          <th>Tasks</th>
+        </tr>
+      </thead>
+      <tbody>
+       <tr>
+          <td><strong>Week 3</strong><br>Apr 21&ndash;27</td>
+          <td>Integration</td>
+          <td>
+            &bull; Finish integrating precomputed Bruneton LUTs into final rendering for accurate lighting and color<br>
+            &bull; Port ocean FFT from CPU to GPU compute shaders
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Week 4</strong><br>Apr 28&ndash;May 4</td>
+          <td>Polish &amp; Stretch Goals</td>
+          <td>
+            &bull; Volumetric clouds with bloom effects<br>
+            &bull; Foam and whitecaps (stretch)<br>
+            &bull; Final presentation / report
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+
+</main>
+
+
+</body>
+</html>
