@@ -326,48 +326,64 @@ section > b:first-child + ul {
   <!-- ============ TERRAIN ============ -->
   <section id="terrain">
     <h3>Terrain Generation &amp; Erosion</h3>
+    <p style="font-style:italic; color:var(--muted); margin-bottom:0.5rem; margin-top:0.15rem;">Heightmap synthesis via layered noise functions, with physically-simulated hydraulic erosion, sediment transport, and tectonic uplift.</p>
 
     <p>
       A 512&times;512 heightmap uses 7-octave fBm Perlin noise (Perlin, 1985) with domain warping (Quilez) to break grid alignment, plus a radial island falloff and Gaussian blur.
       <br><strong>Reference Variation Note:</strong> Perlin (1985) describes single-octave noise; we add fBm stacking and domain warping for continent-scale variety.
     </p>
+        <strong>Sobel Normal Estimation</strong> — a 3&times;3 Sobel operator converts heightmap gradients to surface normals with a full 10-level mip chain, computed once at init.
+<br>
         <strong>MFD routing</strong> (Tarboton, 1997) distributes drainage across all 8 neighbors over 250 iterations.
 <br>
         <strong>Stream Power Erosion</strong> (Willgoose et al., 1991) carves valleys via <code>dh/dt = &minus;K &middot; A<sup>m</sup> &middot; (&part;h/&part;x)</code>, with K spatially modulated for rock-layer banding.
         <!-- <br><strong>Reference Variation Note:</strong> The original uses uniform K; our spatially-varying K is a custom addition for geological layering. -->
 <br>
+        <strong>Sediment Transport &amp; Deposition</strong> — capacity model t<sub>c</sub> = K<sub>T</sub>&middot;A<sup>M</sup>&middot;slope (K<sub>T</sub>&nbsp;=&nbsp;0.010) deposits excess sediment at rate 0.08 to fill valleys and form alluvial fans.
+<br>
         <strong>Thermal erosion</strong> across three intensity zones (K<sub>T</sub> = 0.025 / 0.010 / 0.012) redistributes material on over-steepened slopes, producing talus fans. Each outer iteration runs 40, 6, and 12 thermal passes respectively.
 <br>
         <strong>Uplift / isostatic rebound</strong> (rate 0.0003) maintains topographic relief throughout the simulation.
 <br>
-        <strong>HBAO</strong> (Bavoil et al., 2008) and surface normals are computed once at init to drive per-pixel terrain lighting.
-        <!-- <br><strong>Reference Variation Note:</strong> Original HBAO runs in 3D view space per frame; we adapted it to a one-time 2D heightmap pass at zero per-frame cost. -->
+        <strong>HBAO</strong> (Bavoil et al., 2008) ray-marches 8 directions over a 20-texel radius to compute horizon-based ambient occlusion once at init.
+<br>
+        <strong>Crevice AO</strong> — screen-space 4-neighbor height average; <code>ao = clamp(1 &minus; 2.5 &middot; max(0, h_avg &minus; h), 0.4, 1.0)</code> darkens local concavities.
+<br>
+        <strong>Soft Ray-Marched Shadows</strong> (Quilez, 2010) — 50-step march with adaptive step size; penumbra softness scales as <code>min(res, softness &middot; dist / step_dist)</code>, clamped to [0.2, 1.0].
+<br>
+        <strong>Triplanar Texturing</strong> (Geiss, GPU Gems 3) — noise projected on XZ/XY/YZ planes weighted by |N|² eliminates UV stretching on steep slopes.
+<br>
+        <strong>Vegetation</strong> — up to 50,000 grass instances placed by a compute shader (height [0.12–0.28], N·y &ge; 0.75, log drainage &le; 2.2); crossed-quad blades taper and sway sinusoidally with wind via <code>drawIndexedIndirect</code>.
 
   </section>
 
   <!-- ============ OCEAN ============ -->
   <section id="ocean">
     <h3>Ocean</h3>
+    <p style="font-style:italic; color:var(--muted); margin-bottom:0.5rem; margin-top:0.15rem;">Frequency-domain wave synthesis using the Phillips spectrum with real-time FFT surface reconstruction.</p>
 
-    <p>
-      The ocean uses Tessendorf-style FFT wave synthesis (Tessendorf, 2001) driven by the Phillips spectrum
-      with wind speed 20&nbsp;m/s, wind direction [1.0, 0.8], amplitude A&nbsp;=&nbsp;80, and gravity
-      dispersion &omega;(k)&nbsp;=&nbsp;&radic;(g|k|). Complex wave amplitudes are animated each frame in
-      frequency space, then the surface is recovered via a <strong>2D inverse FFT</strong> implemented
-      entirely in a WGSL compute shader: a Cooley-Tukey (Cooley &amp; Tukey, 1965) radix-2 butterfly pipeline with bit-reversal
-      permutation, 7 butterfly stages for the 128-point transforms, and shared-memory caching to reduce
-      global memory bandwidth. The water shader applies Fresnel reflections and foam masking at wave crests.
-      <br><strong>Reference Variation Note:</strong> We implement a subset of Tessendorf's full model: only height and slope displacement are computed; the choppy horizontal (Gerstner-style) displacement described in the paper is omitted to stay within the 128&times;128 grid budget.     </p>
+    <strong>Phillips Wave Spectrum</strong> (Tessendorf, 2001) — P(k) = A&middot;exp(&minus;1/(kL)²)/k⁴&middot;(k̂&middot;ŵ)⁶, wind speed 20&nbsp;m/s, amplitude A&nbsp;=&nbsp;80, gravity dispersion &omega;(k)&nbsp;=&nbsp;&radic;(g|k|).
+<br>
+    <strong>Complex Gaussian Initialization</strong> — Box-Muller transform seeds h&#x2080;(k) and conjugate h&#x2080;*(&minus;k) to guarantee a real-valued surface.
+<br>
+    <strong>FFT Ocean Surface</strong> (Cooley &amp; Tukey, 1965) — radix-2 butterfly IFFT, 128&times;128, 7 stages with bit-reversal permutation and shared-memory caching.
+<br>
+    <strong>Fresnel Reflectance</strong> (Schlick, 1994) — F&nbsp;=&nbsp;0.02&nbsp;+&nbsp;0.98(1&minus;NdotV)⁵ with foam masking at wave crests.
+<br>
+    <strong>Reference Variation Note:</strong> Only height and slope displacement computed; Gerstner-style choppy horizontal displacement omitted to stay within the 128&times;128 grid budget.
   </section>
 
   <!-- ============ ATMOSPHERE ============ -->
   <section id="atmosphere">
     <h3>Atmosphere &amp; Sky</h3>
+    <p style="font-style:italic; color:var(--muted); margin-bottom:0.5rem; margin-top:0.15rem;">Precomputed transmittance LUT enabling single-scattering Rayleigh and Mie sky rendering, volumetric clouds, and procedural celestial bodies.</p>
 
     <p>
       Sky rendering follows the <strong>precomputed atmospheric scattering</strong> approach of Bruneton &amp; Neyret (2008), building a 256&times;64 transmittance LUT at startup encoding Rayleigh and Mie optical depth over 40 integration steps.
       <br><strong>Reference Variation Note:</strong> The full Bruneton &amp; Neyret framework precomputes irradiance and in-scatter LUTs for multi-order scattering; we implement only single-scattering with the transmittance LUT for a practical real-time trade-off.
     </p>
+    <strong>Rayleigh Phase Function</strong> (3/16&pi;)(1&nbsp;+&nbsp;cos²&theta;) models wavelength-dependent blue-sky scattering.
+<br>
     <strong>Henyey-Greenstein</strong> (Henyey &amp; Greenstein, 1941) Mie phase function (g&nbsp;=&nbsp;0.3) is used for atmospheric scattering; the fragment shader ray-marches 16 steps, sampling the LUT for sun transmittance at each step. Bilinear interpolation is performed manually via four <code>textureLoad</code> calls for WebGPU portability.
     <br>
     <strong>Sun &amp; moon disks</strong> are rendered as analytical disks; the moon adds limb darkening (1&nbsp;&minus;&nbsp;0.35(1&nbsp;&minus;&nbsp;&radic;&mu;)) and a soft corona glow.
@@ -376,41 +392,21 @@ section > b:first-child + ul {
     <br>
     <strong>Volumetric clouds</strong> are ray-marched between 2200–4500&nbsp;m using 4-octave value noise, Beer–Lambert transmittance, and a Henyey-Greenstein phase function (g&nbsp;=&nbsp;0.65&nbsp;/&nbsp;&minus;0.30) with four shadow-ray probes per sample.
     <br><strong>Reference Variation Note:</strong> The standard Henyey-Greenstein uses a single lobe; for clouds we use a dual-lobe powder-sugar approximation to reproduce silver-lining and dark-center effects.
-  </section>
-
-  <!-- ============ VEGETATION ============ -->
-  <section id="vegetation">
-    <h3>Vegetation</h3>
-    <p>
-      A GPU compute shader places up to 50,000 grass instances by testing per-texel height (0.12&ndash;0.28
-      normalized), surface normal (N&middot;y &ge; 0.75 for upright surfaces), and log flow-accumulation
-      (&le; 2.2 to exclude flood plains). An atomic counter fills an instance buffer consumed by the grass
-      vertex shader, which synthesizes crossed-quad geometry with per-vertex tapering and sinusoidal wind sway.
-    </p>
-  </section>
-
-    <!-- ============ BIRD FLOCKING ============ -->
-  <section id="bird_flocking">
-    <h3>
-  Bird Flocking</h3>
-    <p>
-      Bird flocking is simulated using an orientation-based social model inspired by Hoetzlein's Flock2 (2024). Unlike classical Reynolds boids,
-      which apply explicit separation, alignment, and cohesion force vectors, Flock2 treats neighbor influence as a desired turn rate that indirectly steers each bird's heading 
-      through an aerodynamic model. Each bird perceives a local neighborhood, computes a weighted desired orientation from visible neighbors, and adjusts its heading at a rate 
-      limited by a realistic turning cost. 
-      <br><strong>Reference Variation Note:</strong> We adopt Flock2's orientation-based steering model but omit its full aerodynamic lift and drag simulation, instead using a simplified heading-blend that achieves visually plausible flocking at lower per-bird compute cost.
-    </p>
+    <br>
+    <strong>Bird Flocking</strong> — orientation-based flocking (Hoetzlein Flock2, 2024) blends desired headings from visible neighbors; 6 forward probes at 320-unit lookahead steer away from terrain via altitude-gradient forces with Hermite blend at 180–260 m.
   </section>
 
   <!-- ============ POST-PROCESSING ============ -->
   <section id="post">
     <h3>Post-Processing</h3>
+    <p style="font-style:italic; color:var(--muted); margin-bottom:0.5rem; margin-top:0.15rem;">HDR bloom cascade, ACES filmic tone mapping, and 4× MSAA for a cinematic final image.</p>
     <p>
       An HDR <strong>bloom</strong> pipeline thresholds bright pixels via a soft-knee luminance curve
       (threshold 0.80, knee 0.30), downsamples through 4 cascade levels with a 2&times;2 box and
       cross-tap filter, upsamples with weighted taps, then composites onto the HDR buffer. The full image
       is tone-mapped with <strong>ACES</strong> (Academy, 2014) and gamma-corrected (&gamma;&nbsp;=&nbsp;2.2) before
       display. <strong>4&times; MSAA</strong> is applied at the render target level.
+      <strong>OKLab</strong> (Ottosson, 2020) — sRGB &rarr; linear &rarr; cone response &rarr; cube root &rarr; OKLab transform drives perceptually uniform color interpolation on the time-of-day UI dial.
       <!-- <br><strong>Reference Variation Note:</strong> The ACES curve is used as-is from the standard specification; no scene-specific modifications were made. The surrounding bloom cascade and soft-knee threshold are custom additions tuned to Terra's HDR range. -->
     </p>
   </section>
