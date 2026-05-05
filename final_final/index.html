@@ -330,7 +330,6 @@ section > b:first-child + ul {
 
     <p>
       A 512&times;512 heightmap uses 7-octave fBm Perlin noise (Perlin, 1985) with domain warping (Quilez) to break grid alignment, plus a radial island falloff and Gaussian blur.
-      <br><strong>Reference Variation Note:</strong> Perlin (1985) describes single-octave noise; we add fBm stacking and domain warping for continent-scale variety.
     </p>
         <strong>Sobel Normal Estimation</strong> — a 3&times;3 Sobel operator converts heightmap gradients to surface normals with a full 10-level mip chain, computed once at init.
 <br>
@@ -391,9 +390,10 @@ section > b:first-child + ul {
     <strong>Stars &amp; Milky Way</strong> (Quilez) use per-cell hashing in azimuth/altitude space with galactic-latitude density variation, and a three-octave noise band with a galactic-center luminosity boost.
     <br>
     <strong>Volumetric clouds</strong> are ray-marched between 2200–4500&nbsp;m using 4-octave value noise, Beer–Lambert transmittance, and a Henyey-Greenstein phase function (g&nbsp;=&nbsp;0.65&nbsp;/&nbsp;&minus;0.30) with four shadow-ray probes per sample.
-    <br><strong>Reference Variation Note:</strong> The standard Henyey-Greenstein uses a single lobe; for clouds we use a dual-lobe powder-sugar approximation to reproduce silver-lining and dark-center effects.
     <br>
-    <strong>Bird Flocking</strong> — orientation-based flocking (Hoetzlein Flock2, 2024) blends desired headings from visible neighbors; 6 forward probes at 320-unit lookahead steer away from terrain via altitude-gradient forces with Hermite blend at 180–260 m.
+    <strong>Bird Flocking</strong> — orientation-based flocking (Hoetzlein Flock2, 2024) blends desired headings from visible neighbors; 6 forward probes at 320-unit lookahead steer away from terrain via altitude-gradient forces with Hermite blend 180–260 m.
+   <br><strong>Reference Variation Note:</strong> The standard Henyey-Greenstein uses a single lobe; for clouds we use a dual-lobe powder-sugar approximation to reproduce silver-lining and dark-center effects.
+   
   </section>
 
   <!-- ============ POST-PROCESSING ============ -->
