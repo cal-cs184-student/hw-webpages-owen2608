@@ -420,31 +420,16 @@ section > b:first-child + ul {
     <h3>Problems Encountered &amp; Lessons Learned</h3>
     <ul>
       <li>
-        <strong>Erosion instability:</strong> The flow accumulation pass required 250 iteration cycles with
-        re-accumulation every 25 steps to converge without artifacts; fewer passes left visible
-        grid-aligned patterns in the drainage network.
+        <strong>Reference fidelity vs. runtime constraints:</strong> Several techniques from our references required multi-pass precomputation or runtime dependencies that would have introduced unacceptable load times in a browser with no server backend. We prioritized keeping the renderer fully real-time by implementing the most impactful subset of each feature — for example, single-scattering-only atmosphere and height-only ocean displacement — rather than a complete but slow faithful reproduction.
       </li>
       <li>
-        <strong>FFT aliasing in oceans:</strong> Early Phillips spectrum implementations produced
-        zero-frequency spikes. Clamping the minimum wave vector magnitude and explicitly zeroing the DC
-        component eliminated them.
+        <strong>CPU vs. GPU workload partitioning:</strong> Deciding which passes to run on the CPU versus as GPU compute shaders was a recurring challenge. Heightmap generation stayed on the CPU for flexibility, while erosion, AO, normals, and ocean FFT moved to GPU compute shaders. Getting dispatch ordering and explicit memory barriers correct between dependent passes (MFD routing → accumulation → erosion) took significant iteration.
       </li>
       <li>
-        <strong>WebGPU alignment constraints:</strong> WGSL uniform structs require 16-byte alignment; the
-        globals buffer needed careful padding fields to avoid silent data misreads on Metal and Vulkan
-        backends.
+        <strong>Integration across subsystems:</strong> Building a project where terrain, ocean, atmosphere, vegetation, birds, and post-processing all share a single moving sun direction and HDR buffer required careful interface design. Subtle bugs — such as lighting inconsistencies between subsystems or z-fighting at the ocean-terrain boundary — were hard to isolate because they only appeared when multiple systems were running together.
       </li>
       <li>
-        <strong>Transmittance LUT filtering:</strong> Using <code>textureSample</code> failed on GPUs that
-        do not support float32 filtering; manual bilinear interpolation via four <code>textureLoad</code>
-        calls was implemented as a portable fallback.
-      </li>
-      <li>
-        <strong>Lessons:</strong> Precomputed LUTs are essential for atmospheric scattering &mdash;
-        ray-marching sun transmittance per-pixel would cost ~16&times; the current frame budget. GPU-driven
-        erosion is dramatically faster than CPU equivalents but requires careful dispatch ordering with
-        explicit barriers between MFD routing, accumulation, and erosion passes. Cross-quad geometry for
-        grass is surprisingly effective; full mesh blades add little visual benefit at typical densities.
+        <strong>Brainstorming before implementation:</strong> Early on, team members would begin implementing a subsystem before fully cross-referencing the relevant papers and discussing how it would interact with the rest of the pipeline. This led to redundant work and some architectural backtracking. We learned to complete a shared design and reference review before writing any shader code, which saved significant time in the later stages of the project.
       </li>
     </ul>
   </section>
